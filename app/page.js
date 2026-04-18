@@ -3,23 +3,38 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProjects, createProject } from '@/lib/api';
 import { C, Ico, Avatar } from '@/components/shared';
+import OnboardingWizard from '@/components/OnboardingWizard';
 
 export default function HubPage() {
   const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [onboarding, setOnboarding] = useState(false);
 
   useEffect(() => {
     getProjects().then(setProjects).finally(() => setLoading(false));
   }, []);
 
-  const handleNew = async () => {
+  const handleNew = () => setOnboarding(true);
+
+  const handleOnboardingComplete = async (answers) => {
+    const kindMap = { feature: 'feature', short: 'short', tv: 'tv', doc: 'documentary', commercial: 'commercial', music: 'music' };
     const p = await createProject({
-      title: 'New Project', kind: 'feature', status: 'pre-production',
-      day_current: 1, day_total: 1, accent: '#E89B4C', cover_color: '#C26B4A',
+      title: answers.title || 'New Project',
+      kind: kindMap[answers.kind] || answers.kind || 'feature',
+      status: 'pre-production',
+      day_current: 1,
+      day_total: answers.shootDays || 1,
+      accent: '#E89B4C',
+      cover_color: '#C26B4A',
     });
+    setOnboarding(false);
     router.push(`/project/${p.id}`);
   };
+
+  if (onboarding) {
+    return <OnboardingWizard onComplete={handleOnboardingComplete} onCancel={() => setOnboarding(false)} />;
+  }
 
   if (loading) return <div style={{ padding: 48, fontFamily: 'Inter', color: C.muted }}>Loading…</div>;
 
@@ -69,7 +84,10 @@ export default function HubPage() {
           <div style={{ textAlign: 'center', padding: '80px 0', color: C.muted }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🎬</div>
             <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>No projects yet</div>
-            <div style={{ fontSize: 13 }}>Click "New project" to get started.</div>
+            <div style={{ fontSize: 13, marginBottom: 20 }}>Set up your first production in under 2 minutes.</div>
+            <button onClick={handleNew} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'Inter' }}>
+              <Ico.plus /> New project
+            </button>
           </div>
         )}
 
