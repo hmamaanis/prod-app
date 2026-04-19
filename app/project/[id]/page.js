@@ -15,6 +15,7 @@ import AIFeedScreen     from '@/components/AIFeedScreen';
 import LiveTrackerScreen from '@/components/LiveTrackerScreen';
 import AIToast          from '@/components/AIToast';
 import AIPlanPage       from '@/components/AIPlanPage';
+import SearchModal      from '@/components/SearchModal';
 
 const roles = {
   AD:       { name: 'J. Nakamura', role: '1st AD' },
@@ -53,6 +54,7 @@ export default function ProjectPage() {
   const [toastOpen, setToastOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [insightCount, setInsightCount] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -61,6 +63,14 @@ export default function ProjectPage() {
     const t = setTimeout(() => setToastOpen(true), 1600);
     return () => clearTimeout(t);
   }, [id]);
+
+  useEffect(() => {
+    const handler = e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(true); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -142,7 +152,7 @@ export default function ProjectPage() {
               <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3, marginTop: 1 }}>{titles[tab]}</div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6, width: 240 }}>
+            <div onClick={() => setSearchOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6, width: 240, cursor: 'pointer' }}>
               <div style={{ color: C.muted2 }}><Ico.search/></div>
               <span style={{ flex: 1, fontSize: 12.5, color: C.muted2 }}>Search scenes, people, notes...</span>
               <Kbd>⌘ K</Kbd>
@@ -208,6 +218,7 @@ export default function ProjectPage() {
       {/* AI Toast + Plan overlay */}
       <AIToast open={toastOpen && !planOpen} onClick={() => setPlanOpen(true)} onDismiss={() => setToastOpen(false)}/>
       <AIPlanPage open={planOpen} onClose={() => setPlanOpen(false)}/>
+      <SearchModal projectId={id} open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={setTab}/>
 
       {/* Replay button */}
       {!toastOpen && !planOpen && (
