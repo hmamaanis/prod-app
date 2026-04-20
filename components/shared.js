@@ -29,6 +29,7 @@ export const Ico = {
   arrow:    (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" {...p}><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   trash:    (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" {...p}><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   edit:     (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" {...p}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  pencil:   (p={}) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" {...p}><path d="M15.232 5.232l3.536 3.536M3 21l4-1L20.5 7a2.121 2.121 0 00-3-3L4 17.5z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
 export function Avatar({ name = '?', size = 28, ring }) {
