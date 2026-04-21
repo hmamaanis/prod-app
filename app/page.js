@@ -4,15 +4,17 @@ import { useRouter } from 'next/navigation';
 import { getProjects, createProject } from '@/lib/api';
 import { C, Ico, Avatar } from '@/components/shared';
 import OnboardingWizard from '@/components/OnboardingWizard';
+import { useLang } from '@/lib/LangContext';
+import { t, LANGUAGES } from '@/lib/i18n';
 
-const SORT_OPTIONS = [
-  { value: 'recent',  label: 'Recent' },
-  { value: 'az',      label: 'A – Z' },
-  { value: 'status',  label: 'Status' },
-];
+const SORT_OPTIONS_KEYS = ['recent', 'az', 'status'];
 
 export default function HubPage() {
   const router = useRouter();
+  const { lang, setLang } = useLang();
+  const isAr = lang === 'ar';
+  const font = LANGUAGES[lang]?.font || 'Inter, system-ui, sans-serif';
+
   const [projects, setProjects]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [onboarding, setOnboarding] = useState(false);
@@ -28,7 +30,7 @@ export default function HubPage() {
   const handleOnboardingComplete = async (answers) => {
     const kindMap = { feature: 'feature', short: 'short', tv: 'tv', doc: 'documentary', commercial: 'commercial', music: 'music' };
     const p = await createProject({
-      title: answers.title || 'New Project',
+      title: answers.title || t(lang, 'newProject'),
       kind: kindMap[answers.kind] || answers.kind || 'feature',
       status: 'pre-production',
       day_current: 1,
@@ -52,14 +54,23 @@ export default function HubPage() {
     return list;
   }, [projects, search, sort]);
 
+  const sortLabels = { recent: t(lang, 'sortRecent'), az: t(lang, 'sortAZ'), status: t(lang, 'sortStatus') };
+
+  const statusLabel = (s) => {
+    if (s === 'pre-production')  return t(lang, 'preProduction');
+    if (s === 'in-production')   return t(lang, 'inProduction');
+    if (s === 'post-production') return t(lang, 'postProduction');
+    return s;
+  };
+
   if (onboarding) {
     return <OnboardingWizard onComplete={handleOnboardingComplete} onCancel={() => setOnboarding(false)} />;
   }
 
-  if (loading) return <div style={{ padding: 48, fontFamily: 'Inter', color: C.muted }}>Loading…</div>;
+  if (loading) return <div style={{ padding: 48, fontFamily: font, color: C.muted }}>{t(lang, 'loading')}</div>;
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '48px 64px', fontFamily: 'Inter, system-ui' }}>
+    <div dir={isAr ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: C.bg, padding: '48px 64px', fontFamily: font }}>
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
 
         {/* Header */}
@@ -69,13 +80,41 @@ export default function HubPage() {
               <div style={{ width: 26, height: 26, borderRadius: 6, background: C.ink, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"IBM Plex Mono", monospace', fontWeight: 700, fontSize: 12 }}>P</div>
               <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: -0.3 }}>PROD</span>
             </div>
-            <div style={{ fontSize: 11, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase' }}>Workspace</div>
-            <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: -0.6, marginTop: 6 }}>Your projects</div>
-            <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>{projects.length} production{projects.length !== 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{t(lang, 'workspace')}</div>
+            <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: -0.6, marginTop: 6 }}>{t(lang, 'yourProjects')}</div>
+            <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>
+              {t(lang, 'productions', projects.length)}
+            </div>
           </div>
-          <button onClick={handleNew} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'Inter' }}>
-            <Ico.plus/> New project
-          </button>
+
+          {/* Right: lang switcher + new project */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Language switcher */}
+            <div style={{ display: 'flex', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8, overflow: 'hidden' }}>
+              {Object.entries(LANGUAGES).map(([code, cfg]) => (
+                <button
+                  key={code}
+                  onClick={() => setLang(code)}
+                  style={{
+                    background: lang === code ? C.ink : 'none',
+                    color: lang === code ? '#fff' : C.muted,
+                    border: 'none', cursor: 'pointer',
+                    padding: '8px 14px',
+                    fontSize: 12,
+                    fontWeight: lang === code ? 600 : 400,
+                    fontFamily: code === 'ar' ? '"Cairo", sans-serif' : 'Inter, sans-serif',
+                    transition: 'all 140ms',
+                  }}
+                >
+                  {cfg.label}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={handleNew} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: font }}>
+              <Ico.plus/> {t(lang, 'newProject')}
+            </button>
+          </div>
         </div>
 
         {/* Search + sort bar */}
@@ -85,16 +124,16 @@ export default function HubPage() {
               <div style={{ color: C.muted2 }}><Ico.search/></div>
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Search projects..."
-                style={{ flex: 1, border: 'none', background: 'none', fontSize: 13, outline: 'none', fontFamily: 'Inter', color: C.ink }}
+                placeholder={t(lang, 'searchProjects')}
+                style={{ flex: 1, border: 'none', background: 'none', fontSize: 13, outline: 'none', fontFamily: font, color: C.ink, textAlign: isAr ? 'right' : 'left' }}
               />
               {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted2, padding: 0 }}><Ico.x/></button>}
             </div>
             <select value={sort} onChange={e => setSort(e.target.value)} style={{
               border: `1px solid ${C.line}`, background: C.panel, borderRadius: 7, padding: '8px 12px',
-              fontSize: 13, fontFamily: 'Inter', color: C.ink2, cursor: 'pointer', outline: 'none',
+              fontSize: 13, fontFamily: font, color: C.ink2, cursor: 'pointer', outline: 'none',
             }}>
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {SORT_OPTIONS_KEYS.map(k => <option key={k} value={k}>{sortLabels[k]}</option>)}
             </select>
           </div>
         )}
@@ -115,9 +154,11 @@ export default function HubPage() {
               </div>
               <div style={{ padding: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>{p.title}</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 2, textTransform: 'capitalize' }}>{(p.status || '').replace(/-/g, ' ')} · Day {p.day_current} / {p.day_total}</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+                  {statusLabel(p.status)} · {t(lang, 'dayOf', p.day_current, p.day_total)}
+                </div>
                 <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.ink2, fontWeight: 500 }}>
-                  Open project <Ico.arrow/>
+                  {t(lang, 'openProject')} <Ico.arrow/>
                 </div>
               </div>
             </div>
@@ -127,8 +168,8 @@ export default function HubPage() {
         {/* No results from search */}
         {projects.length > 0 && filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: C.muted }}>
-            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>No projects match "{search}"</div>
-            <button onClick={() => setSearch('')} style={{ fontSize: 13, color: C.ink2, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Inter' }}>Clear search</button>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>{t(lang, 'noResultsFor', search)}</div>
+            <button onClick={() => setSearch('')} style={{ fontSize: 13, color: C.ink2, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: font }}>{t(lang, 'clearSearch')}</button>
           </div>
         )}
 
@@ -136,10 +177,10 @@ export default function HubPage() {
         {projects.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', color: C.muted }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🎬</div>
-            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>No projects yet</div>
-            <div style={{ fontSize: 13, marginBottom: 20 }}>Set up your first production in under 2 minutes.</div>
-            <button onClick={handleNew} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'Inter' }}>
-              <Ico.plus /> New project
+            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>{t(lang, 'noProjects')}</div>
+            <div style={{ fontSize: 13, marginBottom: 20 }}>{t(lang, 'noProjectsHint')}</div>
+            <button onClick={handleNew} style={{ background: C.ink, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: font }}>
+              <Ico.plus /> {t(lang, 'newProject')}
             </button>
           </div>
         )}

@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { C, Ico, Avatar, StatusDot, statusLabel } from '@/components/shared';
+import { useLang } from '@/lib/LangContext';
+import { t, LANGUAGES } from '@/lib/i18n';
 import DashboardScreen   from '@/components/DashboardScreen';
 import ShotListScreen    from '@/components/ShotListScreen';
 import CastScreen        from '@/components/CastScreen';
@@ -14,24 +16,43 @@ import BudgetScreen      from '@/components/BudgetScreen';
 import AIFeedScreen      from '@/components/AIFeedScreen';
 
 const TAB_MAP = {
-  dashboard: { label: 'Today',   icon: Ico.dash,     Component: DashboardScreen },
-  shotlist:  { label: 'Shots',   icon: Ico.shotlist,  Component: ShotListScreen },
-  cast:      { label: 'Cast',    icon: Ico.users,     Component: CastScreen },
-  lighting:  { label: 'Lights',  icon: Ico.light,     Component: LightingScreen },
-  location:  { label: 'Map',     icon: Ico.pin,       Component: LocationScreen },
-  tracker:   { label: 'Track',   icon: Ico.map,       Component: LiveTrackerScreen },
-  breakdown: { label: 'Script',  icon: Ico.book,      Component: BreakdownScreen },
-  activity:  { label: 'Log',     icon: Ico.bell,      Component: ActivityScreen },
-  budget:    { label: 'Budget',  icon: Ico.dollar,    Component: BudgetScreen },
-  ai:        { label: 'AI',      icon: Ico.sparkle,   Component: AIFeedScreen },
+  dashboard: { icon: Ico.dash,     Component: DashboardScreen },
+  shotlist:  { icon: Ico.shotlist,  Component: ShotListScreen },
+  cast:      { icon: Ico.users,     Component: CastScreen },
+  lighting:  { icon: Ico.light,     Component: LightingScreen },
+  location:  { icon: Ico.pin,       Component: LocationScreen },
+  tracker:   { icon: Ico.map,       Component: LiveTrackerScreen },
+  breakdown: { icon: Ico.book,      Component: BreakdownScreen },
+  activity:  { icon: Ico.bell,      Component: ActivityScreen },
+  budget:    { icon: Ico.dollar,    Component: BudgetScreen },
+  ai:        { icon: Ico.sparkle,   Component: AIFeedScreen },
+};
+
+// Short label keys for each tab
+const SHORT_KEYS = {
+  dashboard: 'short.dashboard',
+  shotlist:  'short.shotlist',
+  cast:      'short.cast',
+  lighting:  'short.lighting',
+  location:  'short.location',
+  tracker:   'short.tracker',
+  breakdown: 'short.breakdown',
+  activity:  'short.activity',
+  budget:    'short.budget',
+  ai:        'short.ai',
 };
 
 export default function CrewViewPage() {
   const { token } = useParams();
+  const { lang, setLang } = useLang();
+  const isAr = lang === 'ar';
+  const font = LANGUAGES[lang]?.font || 'Inter, system-ui, sans-serif';
+
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [tab, setTab]       = useState(null);
+  const [langOpen, setLangOpen] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -50,24 +71,42 @@ export default function CrewViewPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: C.ink, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"IBM Plex Mono"', fontWeight: 700, fontSize: 16, margin: '0 auto 12px' }}>P</div>
-          <div style={{ fontSize: 13, color: C.muted }}>Loading…</div>
-        </div>
+  const LoadingLogo = () => (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: font }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 8, background: C.ink, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"IBM Plex Mono"', fontWeight: 700, fontSize: 16, margin: '0 auto 12px' }}>P</div>
+        <div style={{ fontSize: 13, color: C.muted }}>{t(lang, 'loading')}</div>
       </div>
-    );
-  }
+    </div>
+  );
+
+  if (loading) return <LoadingLogo/>;
 
   if (notFound || !data) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter' }}>
+      <div dir={isAr ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: font }}>
         <div style={{ textAlign: 'center', maxWidth: 320, padding: 32 }}>
           <div style={{ width: 40, height: 40, borderRadius: 8, background: C.ink, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"IBM Plex Mono"', fontWeight: 700, fontSize: 18, margin: '0 auto 16px' }}>P</div>
-          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Link not found</div>
-          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>This crew access link has expired or is invalid. Ask your AD or Producer to send a new link.</div>
+          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+            {isAr ? 'الرابط غير موجود' : 'Link not found'}
+          </div>
+          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+            {isAr
+              ? 'هذا الرابط انتهت صلاحيته أو غير صالح. اطلب من المخرج أو المساعد إرسال رابط جديد.'
+              : 'This crew access link has expired or is invalid. Ask your AD or Producer to send a new link.'}
+          </div>
+          {/* Lang switcher */}
+          <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center', gap: 8 }}>
+            {Object.entries(LANGUAGES).map(([code, cfg]) => (
+              <button key={code} onClick={() => setLang(code)} style={{
+                background: lang === code ? C.ink : C.tint,
+                color: lang === code ? '#fff' : C.muted,
+                border: `1px solid ${C.line}`, borderRadius: 6, cursor: 'pointer',
+                padding: '6px 12px', fontSize: 12,
+                fontFamily: code === 'ar' ? '"Cairo", sans-serif' : 'Inter, sans-serif',
+              }}>{cfg.label}</button>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -79,7 +118,7 @@ export default function CrewViewPage() {
   const { Component } = TAB_MAP[activeTab] || TAB_MAP['dashboard'];
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: 'Inter, system-ui, sans-serif', WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
+    <div dir={isAr ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: font, WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
 
       {/* Fixed header */}
       <div style={{
@@ -93,9 +132,36 @@ export default function CrewViewPage() {
           <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono"', letterSpacing: 0.5, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project?.title || 'Production'}</div>
           <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: -0.2 }}>{name}</div>
         </div>
-        <div style={{ flexShrink: 0, textAlign: 'right' }}>
+
+        {/* Lang toggle */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button onClick={() => setLangOpen(o => !o)} style={{
+            background: C.tint, border: `1px solid ${C.line2}`, borderRadius: 6,
+            padding: '4px 8px', cursor: 'pointer', fontSize: 11, fontFamily: font, color: C.muted,
+          }}>
+            {LANGUAGES[lang]?.label}
+          </button>
+          {langOpen && (
+            <>
+              <div onClick={() => setLangOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 30 }}/>
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: isAr ? 'auto' : 0, left: isAr ? 0 : 'auto', zIndex: 31, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8, overflow: 'hidden', minWidth: 120 }}>
+                {Object.entries(LANGUAGES).map(([code, cfg]) => (
+                  <button key={code} onClick={() => { setLang(code); setLangOpen(false); }} style={{
+                    width: '100%', background: lang === code ? C.tint : 'none', border: 'none',
+                    padding: '8px 12px', cursor: 'pointer', fontSize: 13, textAlign: isAr ? 'right' : 'left',
+                    fontFamily: code === 'ar' ? '"Cairo", sans-serif' : 'Inter, sans-serif', color: C.ink,
+                  }}>{cfg.label}</button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div style={{ flexShrink: 0, textAlign: isAr ? 'left' : 'right' }}>
           <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono"', marginBottom: 2 }}>{role}</div>
-          <div style={{ fontSize: 10.5, color: C.muted2 }}>Day {project?.day_current || '—'}/{project?.day_total || '—'}</div>
+          <div style={{ fontSize: 10.5, color: C.muted2 }}>
+            {t(lang, 'dayOf', project?.day_current || '—', project?.day_total || '—')}
+          </div>
         </div>
       </div>
 
@@ -116,12 +182,14 @@ export default function CrewViewPage() {
         display: 'flex',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        {tabs.map(t => {
-          const { label, icon: TabIcon } = TAB_MAP[t] || {};
-          if (!TabIcon) return null;
-          const active = activeTab === t;
+        {tabs.map(tid => {
+          const entry = TAB_MAP[tid];
+          if (!entry) return null;
+          const TabIcon = entry.icon;
+          const active = activeTab === tid;
+          const label = t(lang, SHORT_KEYS[tid] || `short.${tid}`) || tid;
           return (
-            <button key={t} onClick={() => setTab(t)} style={{
+            <button key={tid} onClick={() => setTab(tid)} style={{
               flex: 1, background: 'none', border: 'none', cursor: 'pointer',
               padding: '8px 4px 6px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -130,7 +198,7 @@ export default function CrewViewPage() {
               transition: 'color 120ms',
             }}>
               <TabIcon width={20} height={20}/>
-              <span style={{ fontSize: 9, fontWeight: active ? 600 : 400, fontFamily: 'Inter', letterSpacing: 0.2 }}>{label}</span>
+              <span style={{ fontSize: isAr ? 8 : 9, fontWeight: active ? 600 : 400, fontFamily: font, letterSpacing: 0.2 }}>{label}</span>
             </button>
           );
         })}

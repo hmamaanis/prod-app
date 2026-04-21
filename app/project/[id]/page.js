@@ -4,6 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { C, Ico, Avatar, Kbd } from '@/components/shared';
 import { getProject, getInsights, updateProject } from '@/lib/api';
 import { useBreakpoint } from '@/lib/useBreakpoint';
+import { useLang } from '@/lib/LangContext';
+import { t, LANGUAGES } from '@/lib/i18n';
 import DashboardScreen   from '@/components/DashboardScreen';
 import ShotListScreen    from '@/components/ShotListScreen';
 import CastScreen        from '@/components/CastScreen';
@@ -29,54 +31,6 @@ const roles = {
   DP:       { name: 'L. Ferrara',  role: 'DP' },
 };
 
-// Production nav (in-production phase)
-const PRODUCTION_NAV = [
-  { id: 'dashboard',  label: 'Today',       icon: Ico.dash },
-  { id: 'shotlist',   label: 'Shot list',   icon: Ico.shotlist },
-  { id: 'cast',       label: 'Cast & crew', icon: Ico.users },
-  { id: 'lighting',   label: 'Lighting',    icon: Ico.light },
-  { id: 'location',   label: 'Location',    icon: Ico.pin },
-  { id: 'tracker',    label: 'Live tracker',icon: Ico.map },
-  { id: 'breakdown',  label: 'Script',      icon: Ico.book },
-  { id: 'activity',   label: 'Activity',    icon: Ico.bell },
-  { id: 'budget',     label: 'Budget',      icon: Ico.dollar },
-  { id: 'ai',         label: 'AI feed',     icon: Ico.sparkle, tint: true },
-  { id: 'settings',   label: 'View access', icon: Ico.edit },
-];
-
-// Pre-production nav
-const PREPRODUCTION_NAV = [
-  { id: 'script',     label: 'Script',      icon: Ico.book },
-  { id: 'breakdown',  label: 'Breakdown',   icon: Ico.clap },
-  { id: 'stripboard', label: 'Stripboard',  icon: Ico.shotlist },
-  { id: 'callsheet',  label: 'Call sheet',  icon: Ico.bell },
-  { id: 'cast',       label: 'Cast & crew', icon: Ico.users },
-  { id: 'budget',     label: 'Budget',      icon: Ico.dollar },
-  { id: 'ai',         label: 'AI feed',     icon: Ico.sparkle, tint: true },
-  { id: 'settings',   label: 'View access', icon: Ico.edit },
-];
-
-// Post-production nav (placeholder)
-const POSTPRODUCTION_NAV = [
-  { id: 'breakdown',  label: 'Lined script',icon: Ico.book },
-  { id: 'shotlist',   label: 'EDL / Shots', icon: Ico.shotlist },
-  { id: 'activity',   label: 'Log',         icon: Ico.bell },
-  { id: 'settings',   label: 'View access', icon: Ico.edit },
-];
-
-const titles = {
-  dashboard: 'Today', shotlist: 'Shot list', cast: 'Cast & crew',
-  lighting: 'Lighting', location: 'Location', tracker: 'Live tracker',
-  breakdown: 'Script breakdown', activity: 'Activity · Changes',
-  budget: 'Budget & time', ai: 'AI insights', settings: 'View access',
-  script: 'Script import', stripboard: 'Stripboard', callsheet: 'Call sheet',
-};
-
-const PHASE_LABELS = {
-  'pre-production': 'Pre-production',
-  'in-production': 'In production',
-  'post-production': 'Post-production',
-};
 const PHASE_TONES = {
   'pre-production': C.warn,
   'in-production': C.ok,
@@ -94,6 +48,9 @@ export default function ProjectPage() {
   const { id } = useParams();
   const router = useRouter();
   const { mobile } = useBreakpoint();
+  const { lang, setLang } = useLang();
+  const isAr = lang === 'ar';
+  const font = LANGUAGES[lang]?.font || 'Inter, system-ui, sans-serif';
 
   const [project, setProject]     = useState(null);
   const [tab, setTab]             = useState('dashboard');
@@ -105,25 +62,82 @@ export default function ProjectPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [moreOpen, setMoreOpen]   = useState(false);
   const [phaseOpen, setPhaseOpen] = useState(false);
+  const [langOpen, setLangOpen]   = useState(false);
 
   const phase = project?.status || 'in-production';
+
+  // Phase-translated labels
+  const PHASE_LABELS = {
+    'pre-production':  t(lang, 'preProduction'),
+    'in-production':   t(lang, 'inProduction'),
+    'post-production': t(lang, 'postProduction'),
+  };
+
+  // Nav items — built with translated labels
+  const PRODUCTION_NAV = [
+    { id: 'dashboard',  label: t(lang, 'today'),       icon: Ico.dash },
+    { id: 'shotlist',   label: t(lang, 'shotList'),    icon: Ico.shotlist },
+    { id: 'cast',       label: t(lang, 'castCrew'),    icon: Ico.users },
+    { id: 'lighting',   label: t(lang, 'lighting'),    icon: Ico.light },
+    { id: 'location',   label: t(lang, 'location'),    icon: Ico.pin },
+    { id: 'tracker',    label: t(lang, 'liveTracker'), icon: Ico.map },
+    { id: 'breakdown',  label: t(lang, 'breakdown'),   icon: Ico.book },
+    { id: 'activity',   label: t(lang, 'activity'),    icon: Ico.bell },
+    { id: 'budget',     label: t(lang, 'budget'),      icon: Ico.dollar },
+    { id: 'ai',         label: t(lang, 'aiFeed'),      icon: Ico.sparkle, tint: true },
+    { id: 'settings',   label: t(lang, 'viewAccess'),  icon: Ico.edit },
+  ];
+
+  const PREPRODUCTION_NAV = [
+    { id: 'script',     label: t(lang, 'scriptImport'), icon: Ico.book },
+    { id: 'breakdown',  label: t(lang, 'breakdown'),    icon: Ico.clap },
+    { id: 'stripboard', label: t(lang, 'stripboard'),   icon: Ico.shotlist },
+    { id: 'callsheet',  label: t(lang, 'callSheet'),    icon: Ico.bell },
+    { id: 'cast',       label: t(lang, 'castCrew'),     icon: Ico.users },
+    { id: 'budget',     label: t(lang, 'budget'),       icon: Ico.dollar },
+    { id: 'ai',         label: t(lang, 'aiFeed'),       icon: Ico.sparkle, tint: true },
+    { id: 'settings',   label: t(lang, 'viewAccess'),   icon: Ico.edit },
+  ];
+
+  const POSTPRODUCTION_NAV = [
+    { id: 'breakdown',  label: t(lang, 'breakdown'),   icon: Ico.book },
+    { id: 'shotlist',   label: t(lang, 'shotList'),    icon: Ico.shotlist },
+    { id: 'activity',   label: t(lang, 'activity'),    icon: Ico.bell },
+    { id: 'settings',   label: t(lang, 'viewAccess'),  icon: Ico.edit },
+  ];
 
   const navItems = phase === 'pre-production' ? PREPRODUCTION_NAV
     : phase === 'post-production' ? POSTPRODUCTION_NAV
     : PRODUCTION_NAV;
 
+  const titles = {
+    dashboard: t(lang, 'today'),
+    shotlist:  t(lang, 'shotList'),
+    cast:      t(lang, 'castCrew'),
+    lighting:  t(lang, 'lighting'),
+    location:  t(lang, 'location'),
+    tracker:   t(lang, 'liveTracker'),
+    breakdown: t(lang, 'breakdown'),
+    activity:  t(lang, 'activity'),
+    budget:    t(lang, 'budget'),
+    ai:        t(lang, 'aiFeed'),
+    settings:  t(lang, 'viewAccess'),
+    script:    t(lang, 'scriptImport'),
+    stripboard:t(lang, 'stripboard'),
+    callsheet: t(lang, 'callSheet'),
+  };
+
   useEffect(() => {
     if (!id) return;
     getProject(id).then(p => {
       setProject(p);
-      // Set default tab per phase
       if (p?.status === 'pre-production') setTab('script');
       else if (p?.status === 'post-production') setTab('breakdown');
       else setTab('dashboard');
     }).catch(() => {});
     getInsights(id).then(ins => setInsightCount(ins.length)).catch(() => {});
-    const t = setTimeout(() => setToastOpen(true), 1600);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToastOpen(true), 1600);
+    return () => clearTimeout(timer);
   }, [id]);
 
   useEffect(() => {
@@ -143,11 +157,46 @@ export default function ProjectPage() {
     await updateProject(id, { status: newPhase });
   };
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const today = new Date().toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Mobile: which tabs are in bottom bar vs "more" drawer
   const mobilePrimary = MOBILE_PRIMARY[phase] || MOBILE_PRIMARY['in-production'];
   const mobileMore = navItems.filter(n => !mobilePrimary.includes(n.id));
+
+  // Language switcher (shared between mobile + desktop)
+  const LangSwitcher = ({ style = {} }) => (
+    <div style={{ position: 'relative', ...style }}>
+      <button onClick={() => setLangOpen(o => !o)} style={{
+        background: C.tint, border: `1px solid ${C.line2}`, borderRadius: 6,
+        padding: '5px 10px', cursor: 'pointer', fontSize: 12, fontFamily: font,
+        color: C.ink2, display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        {LANGUAGES[lang]?.label} <Ico.chevD/>
+      </button>
+      {langOpen && (
+        <>
+          <div onClick={() => setLangOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }}/>
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', right: isAr ? 'auto' : 0, left: isAr ? 0 : 'auto',
+            zIndex: 51, background: C.panel, border: `1px solid ${C.line}`,
+            borderRadius: 8, overflow: 'hidden', minWidth: 130,
+            boxShadow: '0 8px 20px -8px rgba(0,0,0,0.2)',
+          }}>
+            {Object.entries(LANGUAGES).map(([code, cfg]) => (
+              <button key={code} onClick={() => { setLang(code); setLangOpen(false); }} style={{
+                width: '100%', background: lang === code ? C.tint : 'none', border: 'none',
+                padding: '9px 14px', cursor: 'pointer', textAlign: isAr ? 'right' : 'left',
+                fontSize: 13, fontFamily: code === 'ar' ? '"Cairo", sans-serif' : 'Inter, sans-serif',
+                color: C.ink, display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                {lang === code && <span style={{ color: C.ok }}><Ico.check/></span>}
+                {cfg.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   const renderScreen = () => {
     const props = { projectId: id };
@@ -173,7 +222,7 @@ export default function ProjectPage() {
   /* ── MOBILE LAYOUT ─────────────────────────────────────────────────── */
   if (mobile) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: 'Inter, system-ui, sans-serif', WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
+      <div dir={isAr ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: font, WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
 
         {/* Mobile header */}
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20, background: C.panel, borderBottom: `1px solid ${C.line}`, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -194,16 +243,17 @@ export default function ProjectPage() {
             {phaseOpen && (
               <>
                 <div onClick={() => setPhaseOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 30 }}/>
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 31, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: '0 8px 24px -8px rgba(0,0,0,0.2)', overflow: 'hidden', width: 190 }}>
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: isAr ? 'auto' : 0, left: isAr ? 0 : 'auto', zIndex: 31, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: '0 8px 24px -8px rgba(0,0,0,0.2)', overflow: 'hidden', width: 190 }}>
                   {Object.entries(PHASE_LABELS).map(([k, l]) => (
-                    <button key={k} onClick={() => handlePhaseChange(k)} style={{ width: '100%', background: phase === k ? C.tint : 'none', border: 'none', padding: '9px 14px', cursor: 'pointer', textAlign: 'left', fontSize: 13, fontFamily: 'Inter', color: C.ink }}>
-                      <span style={{ color: PHASE_TONES[k], marginRight: 8 }}>●</span>{l}
+                    <button key={k} onClick={() => handlePhaseChange(k)} style={{ width: '100%', background: phase === k ? C.tint : 'none', border: 'none', padding: '9px 14px', cursor: 'pointer', textAlign: isAr ? 'right' : 'left', fontSize: 13, fontFamily: font, color: C.ink }}>
+                      <span style={{ color: PHASE_TONES[k], marginInlineEnd: 8 }}>●</span>{l}
                     </button>
                   ))}
                 </div>
               </>
             )}
           </div>
+          <LangSwitcher/>
           <button onClick={() => setSearchOpen(true)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: C.muted }}>
             <Ico.search/>
           </button>
@@ -227,6 +277,7 @@ export default function ProjectPage() {
             const n = navItems.find(x => x.id === tid);
             if (!n) return null;
             const active = tab === n.id;
+            const shortLabel = t(lang, `short.${tid}`) || n.label.split(' ')[0];
             return (
               <button key={n.id} onClick={() => { setTab(n.id); setMoreOpen(false); }} style={{
                 flex: 1, background: 'none', border: 'none', cursor: 'pointer',
@@ -236,7 +287,7 @@ export default function ProjectPage() {
                 borderTop: active ? `2px solid ${C.ink}` : '2px solid transparent',
               }}>
                 <n.icon width={20} height={20}/>
-                <span style={{ fontSize: 9, fontWeight: active ? 600 : 400, letterSpacing: 0.2 }}>{n.label.split(' ')[0]}</span>
+                <span style={{ fontSize: isAr ? 8 : 9, fontWeight: active ? 600 : 400, letterSpacing: 0.2, fontFamily: font }}>{shortLabel}</span>
               </button>
             );
           })}
@@ -250,7 +301,7 @@ export default function ProjectPage() {
               borderTop: moreOpen ? `2px solid ${C.ink}` : '2px solid transparent',
             }}>
               <Ico.chevD width={20} height={20}/>
-              <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 0.2 }}>More</span>
+              <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: 0.2, fontFamily: font }}>{t(lang, 'more')}</span>
             </button>
           )}
         </div>
@@ -275,7 +326,7 @@ export default function ProjectPage() {
                     color: active ? C.ink : C.muted,
                   }}>
                     <n.icon width={18} height={18}/>
-                    <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, fontFamily: 'Inter', textAlign: 'center', lineHeight: 1.2 }}>{n.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, fontFamily: font, textAlign: 'center', lineHeight: 1.2 }}>{n.label}</span>
                   </button>
                 );
               })}
@@ -292,21 +343,22 @@ export default function ProjectPage() {
 
   /* ── DESKTOP LAYOUT ─────────────────────────────────────────────────── */
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: 'Inter, system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '232px 1fr', minHeight: '100vh' }}>
+    <div dir={isAr ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: C.bg, color: C.ink, fontFamily: font, WebkitFontSmoothing: 'antialiased' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isAr ? '1fr 232px' : '232px 1fr', minHeight: '100vh' }}>
 
         {/* Sidebar */}
         <div style={{
-          borderRight: `1px solid ${C.line}`, background: C.panel,
+          borderInlineEnd: `1px solid ${C.line}`, background: C.panel,
           display: 'flex', flexDirection: 'column',
           position: 'sticky', top: 0, height: '100vh', overflow: 'hidden',
+          gridColumn: isAr ? 2 : 1,
         }}>
           <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.line}` }}>
             <button onClick={() => router.push('/')} style={{
               display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.muted,
               fontFamily: '"IBM Plex Mono", monospace', background: 'none', border: 'none',
               cursor: 'pointer', padding: 0, marginBottom: 8, letterSpacing: 0.5,
-            }}>← All projects</button>
+            }}>{t(lang, 'allProjects')}</button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 26, height: 26, borderRadius: 6, background: C.ink, color: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"IBM Plex Mono", monospace', fontWeight: 700, fontSize: 12 }}>P</div>
               <div>
@@ -321,10 +373,10 @@ export default function ProjectPage() {
             <button onClick={() => setPhaseOpen(o => !o)} style={{
               width: '100%', background: C.tint, border: `1px solid ${PHASE_TONES[phase]}20`,
               borderRadius: 6, padding: '6px 10px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+              display: 'flex', alignItems: 'center', gap: 8, textAlign: isAr ? 'right' : 'left',
             }}>
               <span style={{ width: 7, height: 7, borderRadius: 99, background: PHASE_TONES[phase], flexShrink: 0 }}/>
-              <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.ink }}>{PHASE_LABELS[phase]}</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.ink, fontFamily: font }}>{PHASE_LABELS[phase]}</span>
               <Ico.chevD/>
             </button>
             {phaseOpen && (
@@ -332,10 +384,10 @@ export default function ProjectPage() {
                 <div onClick={() => setPhaseOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }}/>
                 <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 10, right: 10, zIndex: 41, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8, boxShadow: '0 8px 24px -8px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
                   {Object.entries(PHASE_LABELS).map(([k, l]) => (
-                    <button key={k} onClick={() => handlePhaseChange(k)} style={{ width: '100%', background: phase === k ? C.tint : 'none', border: 'none', padding: '9px 12px', cursor: 'pointer', textAlign: 'left', fontSize: 13, fontFamily: 'Inter', color: C.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button key={k} onClick={() => handlePhaseChange(k)} style={{ width: '100%', background: phase === k ? C.tint : 'none', border: 'none', padding: '9px 12px', cursor: 'pointer', textAlign: isAr ? 'right' : 'left', fontSize: 13, fontFamily: font, color: C.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ width: 7, height: 7, borderRadius: 99, background: PHASE_TONES[k], flexShrink: 0 }}/>
                       {l}
-                      {phase === k && <span style={{ marginLeft: 'auto', color: C.ok }}><Ico.check/></span>}
+                      {phase === k && <span style={{ marginInlineStart: 'auto', color: C.ok }}><Ico.check/></span>}
                     </button>
                   ))}
                 </div>
@@ -344,47 +396,51 @@ export default function ProjectPage() {
           </div>
 
           <div style={{ flex: 1, padding: 10, overflow: 'auto' }}>
-            <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', padding: '8px 10px 4px' }}>Workspace</div>
+            <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', padding: '8px 10px 4px' }}>{t(lang, 'workspace')}</div>
             {navItems.map(n => (
               <button key={n.id} onClick={() => setTab(n.id)} style={{
                 width: '100%', background: tab === n.id ? C.tint : 'none',
                 border: 'none', padding: '7px 10px', borderRadius: 6, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 10,
                 color: tab === n.id ? C.ink : C.ink2,
-                fontSize: 13, fontWeight: tab === n.id ? 500 : 400, fontFamily: 'Inter',
-                marginBottom: 1, textAlign: 'left',
+                fontSize: 13, fontWeight: tab === n.id ? 500 : 400, fontFamily: font,
+                marginBottom: 1, textAlign: isAr ? 'right' : 'left',
               }}>
                 <span style={{ color: n.tint ? C.accent : tab === n.id ? C.ink : C.muted, display: 'flex' }}><n.icon/></span>
                 {n.label}
                 {n.id === 'ai' && insightCount > 0 && (
-                  <span style={{ marginLeft: 'auto', background: C.accent, color: '#fff', fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}>{insightCount}</span>
+                  <span style={{ marginInlineStart: 'auto', background: C.accent, color: '#fff', fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}>{insightCount}</span>
                 )}
                 {n.id === 'activity' && (
-                  <span style={{ marginLeft: 'auto', background: C.line2, color: C.muted, fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}>8</span>
+                  <span style={{ marginInlineStart: 'auto', background: C.line2, color: C.muted, fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}>8</span>
                 )}
               </button>
             ))}
           </div>
 
           <div style={{ padding: 14, borderTop: `1px solid ${C.line}` }}>
-            <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>Key team</div>
+            <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{t(lang, 'keyTeam')}</div>
             <div style={{ display: 'flex', marginBottom: 10 }}>
               {['M. Okafor', 'L. Ferrara', 'J. Nakamura', 'S. Hartley'].map((n, i) => (
-                <div key={n} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                <div key={n} style={{ marginInlineStart: i === 0 ? 0 : -6 }}>
                   <Avatar name={n} size={24} ring={C.panel}/>
                 </div>
               ))}
-              <div style={{ width: 24, height: 24, borderRadius: 99, background: C.tint, color: C.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, marginLeft: -6, border: `2px solid ${C.panel}` }}>+10</div>
+              <div style={{ width: 24, height: 24, borderRadius: 99, background: C.tint, color: C.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, marginInlineStart: -6, border: `2px solid ${C.panel}` }}>+10</div>
             </div>
             <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>{project?.title || '…'} · {project?.kind || 'Feature'}</div>
             <div style={{ fontSize: 10.5, color: C.muted2, fontFamily: '"IBM Plex Mono", monospace', marginTop: 2 }}>
-              Day {project?.day_current || '–'} / {project?.day_total || '–'}
+              {t(lang, 'dayOf', project?.day_current || '–', project?.day_total || '–')}
+            </div>
+            {/* Lang switcher in sidebar footer */}
+            <div style={{ marginTop: 10 }}>
+              <LangSwitcher style={{ display: 'inline-block' }}/>
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, gridColumn: isAr ? 1 : 2 }}>
           {/* Top bar */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 16,
@@ -392,13 +448,13 @@ export default function ProjectPage() {
             background: C.bg, position: 'sticky', top: 0, zIndex: 10,
           }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10.5, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{today} · Day {project?.day_current || '–'}</div>
-              <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3, marginTop: 1 }}>{titles[tab] || tab}</div>
+              <div style={{ fontSize: 10.5, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{today} · {t(lang, 'day')} {project?.day_current || '–'}</div>
+              <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3, marginTop: 1, fontFamily: font }}>{titles[tab] || tab}</div>
             </div>
 
             <div onClick={() => setSearchOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6, width: 240, cursor: 'pointer' }}>
               <div style={{ color: C.muted2 }}><Ico.search/></div>
-              <span style={{ flex: 1, fontSize: 12.5, color: C.muted2 }}>Search scenes, people, notes...</span>
+              <span style={{ flex: 1, fontSize: 12.5, color: C.muted2, fontFamily: font }}>{t(lang, 'searchPlaceholder')}</span>
               <Kbd>⌘ K</Kbd>
             </div>
 
@@ -409,7 +465,7 @@ export default function ProjectPage() {
                 padding: '5px 10px 5px 5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
               }}>
                 <Avatar name={roles[role].name} size={22}/>
-                <div style={{ textAlign: 'left' }}>
+                <div style={{ textAlign: isAr ? 'right' : 'left' }}>
                   <div style={{ fontSize: 12, fontWeight: 500 }}>{roles[role].name}</div>
                   <div style={{ fontSize: 10, color: C.muted, fontFamily: '"IBM Plex Mono", monospace' }}>{roles[role].role}</div>
                 </div>
@@ -419,15 +475,15 @@ export default function ProjectPage() {
                 <>
                   <div onClick={() => setRoleOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }}/>
                   <div style={{
-                    position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 41,
+                    position: 'absolute', top: 'calc(100% + 6px)', right: isAr ? 'auto' : 0, left: isAr ? 0 : 'auto', zIndex: 41,
                     background: C.panel, border: `1px solid ${C.line}`, borderRadius: 8,
                     boxShadow: '0 12px 30px -10px rgba(0,0,0,0.15)', width: 240, overflow: 'hidden',
                   }}>
-                    <div style={{ padding: '8px 12px', fontSize: 10.5, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', borderBottom: `1px solid ${C.line}` }}>View as</div>
+                    <div style={{ padding: '8px 12px', fontSize: 10.5, color: C.muted, fontFamily: '"IBM Plex Mono", monospace', letterSpacing: 1, textTransform: 'uppercase', borderBottom: `1px solid ${C.line}` }}>{t(lang, 'viewAs')}</div>
                     {Object.entries(roles).map(([k, r]) => (
                       <button key={k} onClick={() => { setRole(k); setRoleOpen(false); }} style={{
                         width: '100%', background: role === k ? C.tint : 'none', border: 'none',
-                        padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                        padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, textAlign: isAr ? 'right' : 'left',
                       }}>
                         <Avatar name={r.name} size={26}/>
                         <div style={{ flex: 1 }}>
@@ -455,15 +511,15 @@ export default function ProjectPage() {
       <AIPlanPage open={planOpen} onClose={() => setPlanOpen(false)}/>
       <SearchModal projectId={id} open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={setTab}/>
 
-      {/* Replay button (desktop only) */}
+      {/* Replay button */}
       {!toastOpen && !planOpen && (
         <button onClick={() => setToastOpen(true)} style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 50,
+          position: 'fixed', bottom: 24, insetInlineEnd: 24, zIndex: 50,
           background: C.ink, color: '#fff', border: 'none', borderRadius: 999,
           padding: '10px 16px', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-          fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 8,
+          fontFamily: font, display: 'flex', alignItems: 'center', gap: 8,
           boxShadow: '0 8px 24px -8px rgba(0,0,0,0.25)',
-        }}><Ico.sparkle/>Replay AI alert</button>
+        }}><Ico.sparkle/>{t(lang, 'replayAI')}</button>
       )}
     </div>
   );
