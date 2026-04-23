@@ -27,6 +27,7 @@ import StripboardScreen   from '@/components/StripboardScreen';
 import CallSheetScreen    from '@/components/CallSheetScreen';
 import NotepadScreen      from '@/components/NotepadScreen';
 import PostProductionScreen from '@/components/PostProductionScreen';
+import AIChatPanel, { ChatToggleButton } from '@/components/AIChatPanel';
 
 const ROLES = {
   AD:       { name: 'J. Nakamura', role: '1st AD' },
@@ -127,6 +128,8 @@ export default function ProjectPage() {
   const [moreOpen, setMoreOpen]     = useState(false);
   const [phaseOpen, setPhaseOpen]   = useState(false);
   const [langOpen, setLangOpen]     = useState(false);
+  const [chatOpen, setChatOpen]     = useState(false);
+  const [scenes, setScenes]         = useState([]);
 
   const phase = project?.status || 'in-production';
 
@@ -161,6 +164,7 @@ export default function ProjectPage() {
       else setTab('dashboard');
     }).catch(() => {});
     getInsights(id).then(ins => setInsightCount(ins.length)).catch(() => {});
+    import('@/lib/api').then(({ getScenes }) => getScenes(id).then(setScenes).catch(() => {}));
     const timer = setTimeout(() => setToastOpen(true), 1600);
     return () => clearTimeout(timer);
   }, [id]);
@@ -287,6 +291,9 @@ export default function ProjectPage() {
             )}
           </div>
           <LangSwitcher/>
+          <button onClick={() => setChatOpen(o => !o)} style={{ background: chatOpen ? C.ink : 'none', border: 'none', padding: 6, cursor: 'pointer', color: chatOpen ? '#fff' : C.muted, flexShrink: 0, borderRadius: 7, display: 'flex' }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </button>
           <button onClick={() => setSearchOpen(true)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: C.muted, flexShrink: 0 }}>
             <Ico.search/>
           </button>
@@ -357,9 +364,16 @@ export default function ProjectPage() {
         <SearchModal projectId={id} open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={tid => { setTab(tid); setMoreOpen(false); }}/>
         <AIToast open={toastOpen && !planOpen} onClick={() => setPlanOpen(true)} onDismiss={() => setToastOpen(false)}/>
         <AIPlanPage open={planOpen} onClose={() => setPlanOpen(false)}/>
+        <AIChatPanel
+          open={chatOpen} onClose={() => setChatOpen(false)}
+          projectId={id} projectTitle={project?.title}
+          currentTab={tab} sceneContext={scenes}
+        />
       </div>
     );
   }
+
+  /* ─── END MOBILE, continue with DESKTOP ─────────────────────────────────── */
 
   /* ═══ DESKTOP LAYOUT ════════════════════════════════════════════════════ */
   return (
@@ -501,11 +515,14 @@ export default function ProjectPage() {
             </div>
 
             {/* Search */}
-            <div onClick={() => setSearchOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6, width: 220, cursor: 'pointer', flexShrink: 0 }}>
+            <div onClick={() => setSearchOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6, width: 200, cursor: 'pointer', flexShrink: 0 }}>
               <div style={{ color: C.muted2 }}><Ico.search/></div>
               <span style={{ flex: 1, fontSize: 12, color: C.muted2, fontFamily: font }}>{t(lang, 'searchPlaceholder')}</span>
               <Kbd>⌘K</Kbd>
             </div>
+
+            {/* Script AI chat toggle */}
+            <ChatToggleButton open={chatOpen} onClick={() => setChatOpen(o => !o)}/>
 
             {/* Role switcher */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -558,6 +575,13 @@ export default function ProjectPage() {
       <AIToast open={toastOpen && !planOpen} onClick={() => setPlanOpen(true)} onDismiss={() => setToastOpen(false)}/>
       <AIPlanPage open={planOpen} onClose={() => setPlanOpen(false)}/>
       <SearchModal projectId={id} open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={setTab}/>
+
+      {/* AI Chat panel */}
+      <AIChatPanel
+        open={chatOpen} onClose={() => setChatOpen(false)}
+        projectId={id} projectTitle={project?.title}
+        currentTab={tab} sceneContext={scenes}
+      />
 
       {/* Replay button */}
       {!toastOpen && !planOpen && (
